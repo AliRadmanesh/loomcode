@@ -8,7 +8,7 @@ const client = new OpenAI({
 
 async function main() {
   const response = await client.responses.create({
-    model: "openai/gpt-4o-mini",
+    model: process.env.OPENROUTER_MODEL,
     input: "What is the capital of France? Answer in one word.",
   });
 
