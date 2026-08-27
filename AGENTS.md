@@ -6,6 +6,14 @@ build a Claude Code clone from scratch, **without any agent frameworks**
 language) — the tool-calling loop, prompt assembly, and memory must be
 hand-rolled so the underlying mechanics are fully understood.
 
+## Simplicity principle
+
+Each week, build the **simplest version** of whatever is being discussed
+that week, from scratch. Avoid complexity from the start — no
+speculative abstractions, no unrequested features, no extra tooling. If
+a later week's assignment needs more, extend the existing base
+gradually at that point rather than pre-building for it now.
+
 ## Tech stack
 
 - TypeScript, run and managed with **Bun** — no npm/yarn/pnpm, no bundler.
