@@ -1,7 +1,10 @@
 {
-  "name": "codes",
+  "name": "loomcode",
   "type": "module",
   "private": true,
+  "scripts": {
+    "dev": "bun run src/agent.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/node": "^26.4.0"
