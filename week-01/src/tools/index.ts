@@ -1,4 +1,5 @@
 import type OpenAI from "openai";
+import { createWebSearchTool } from "./web-search.ts";
 
 export interface Tool {
   name: string;
@@ -19,4 +20,10 @@ export function toolSchemas(registry: ToolRegistry): OpenAI.Responses.FunctionTo
     parameters: tool.parameters,
     strict: false,
   }));
+}
+
+export function createToolRegistry(deps: { client: OpenAI; model: string }): ToolRegistry {
+  return {
+    web_search: createWebSearchTool(deps),
+  };
 }

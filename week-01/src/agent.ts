@@ -3,14 +3,14 @@ import OpenAI from "openai";
 import * as readline from "node:readline/promises";
 import { stdin, stdout } from "node:process";
 import { runTurn } from "./loop.ts";
-import type { ToolRegistry } from "./tools/index.ts";
+import { createToolRegistry } from "./tools/index.ts";
 
 const client = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
   baseURL: process.env.OPENROUTER_BASE_URL,
 });
 const model = process.env.OPENROUTER_MODEL!;
-const registry: ToolRegistry = {};
+const registry = createToolRegistry({ client, model });
 
 async function main() {
   const rl = readline.createInterface({ input: stdin, output: stdout });
