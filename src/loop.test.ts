@@ -112,3 +112,68 @@ test("step cap: gives up after MAX_STEPS if the model never stops calling tools"
   expect(createCalls).toBe(MAX_STEPS);
   expect(answer).toContain(`${MAX_STEPS}`);
 });
+
+test("risky tool: denial feeds back 'User denied this action.' and does not execute", async () => {
+  let executed = false;
+  const fakeWriteFile: Tool = {
+    name: "write_file",
+    description: "fake",
+    parameters: { type: "object", properties: {} },
+    execute: async () => {
+      executed = true;
+      return "wrote it";
+    },
+  };
+  let call = 0;
+  const client: ResponsesClient = {
+    responses: {
+      create: async () => {
+        call++;
+        if (call === 1) return fakeResponse("", [{ name: "write_file", args: { path: "x" }, call_id: "call_1" }]);
+        return fakeResponse("done");
+      },
+    },
+  };
+  const input: OpenAI.Responses.ResponseInputItem[] = [{ role: "user", content: "write x" }];
+  const answer = await runTurn({
+    client,
+    model: "m",
+    input,
+    registry: { write_file: fakeWriteFile },
+    confirm: async () => false,
+  });
+  expect(answer).toBe("done");
+  expect(executed).toBe(false);
+  const outputItem = input[2]! as OpenAI.Responses.ResponseInputItem.FunctionCallOutput;
+  expect(outputItem.output).toBe("User denied this action.");
+});
+
+test("risky tool: approval runs it normally", async () => {
+  const fakeWriteFile: Tool = {
+    name: "write_file",
+    description: "fake",
+    parameters: { type: "object", properties: {} },
+    execute: async () => "wrote it",
+  };
+  let call = 0;
+  const client: ResponsesClient = {
+    responses: {
+      create: async () => {
+        call++;
+        if (call === 1) return fakeResponse("", [{ name: "write_file", args: { path: "x" }, call_id: "call_1" }]);
+        return fakeResponse("done");
+      },
+    },
+  };
+  const input: OpenAI.Responses.ResponseInputItem[] = [{ role: "user", content: "write x" }];
+  const answer = await runTurn({
+    client,
+    model: "m",
+    input,
+    registry: { write_file: fakeWriteFile },
+    confirm: async () => true,
+  });
+  expect(answer).toBe("done");
+  const outputItem = input[2]! as OpenAI.Responses.ResponseInputItem.FunctionCallOutput;
+  expect(outputItem.output).toBe("wrote it");
+});

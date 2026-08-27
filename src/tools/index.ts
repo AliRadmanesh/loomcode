@@ -15,7 +15,7 @@ export interface Tool {
 
 export type ToolRegistry = Record<string, Tool>;
 
-export const RISKY = new Set<string>();
+export const RISKY = new Set(["write_file", "edit_file", "run_command"]);
 
 export function toolSchemas(registry: ToolRegistry): OpenAI.Responses.FunctionTool[] {
   return Object.values(registry).map((tool) => ({
