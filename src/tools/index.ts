@@ -1,5 +1,9 @@
 import type OpenAI from "openai";
 import { createWebSearchTool } from "./web-search.ts";
+import { writeFileTool } from "./write-file.ts";
+import { readFileTool } from "./read-file.ts";
+import { editFileTool } from "./edit-file.ts";
+import { listFilesTool } from "./list-files.ts";
 
 export interface Tool {
   name: string;
@@ -25,5 +29,9 @@ export function toolSchemas(registry: ToolRegistry): OpenAI.Responses.FunctionTo
 export function createToolRegistry(deps: { client: OpenAI; model: string }): ToolRegistry {
   return {
     web_search: createWebSearchTool(deps),
+    write_file: writeFileTool,
+    read_file: readFileTool,
+    edit_file: editFileTool,
+    list_files: listFilesTool,
   };
 }
