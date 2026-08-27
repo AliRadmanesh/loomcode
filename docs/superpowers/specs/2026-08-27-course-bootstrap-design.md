@@ -77,7 +77,7 @@ was built.
 4. `.env.example` with:
    - `OPENROUTER_API_KEY`
    - `OPENROUTER_BASE_URL`
-5. `agent.ts`:
+5. `src/agent.ts`:
    - Loads environment variables via `dotenv`.
    - Constructs an `OpenAI` client from the `openai` package, pointed at
      OpenRouter via `baseURL` + `apiKey` from the env vars above.
@@ -85,7 +85,11 @@ was built.
      simple hardcoded prompt/question.
    - Logs the model's answer to the console.
 6. `package.json` gets a script (e.g. `dev` or `start`) that runs
-   `bun run agent.ts`.
+   `bun run src/agent.ts`.
+
+All source code (this week's `agent.ts` and every later week's code) lives
+under `src/`. Root stays for config (`package.json`, `tsconfig.json`,
+`.env*`) and docs (`CLAUDE.md`, `AGENTS.md`, `docs/`).
 
 ## Documentation
 
