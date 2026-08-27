@@ -4,6 +4,7 @@ import { writeFileTool } from "./write-file.ts";
 import { readFileTool } from "./read-file.ts";
 import { editFileTool } from "./edit-file.ts";
 import { listFilesTool } from "./list-files.ts";
+import { runCommandTool } from "./run-command.ts";
 
 export interface Tool {
   name: string;
@@ -33,5 +34,6 @@ export function createToolRegistry(deps: { client: OpenAI; model: string }): Too
     read_file: readFileTool,
     edit_file: editFileTool,
     list_files: listFilesTool,
+    run_command: runCommandTool,
   };
 }
