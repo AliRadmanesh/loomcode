@@ -38,6 +38,7 @@ export async function runTurn(opts: RunTurnOptions): Promise<string> {
 
     for (const call of calls) {
       input.push(call);
+      console.log(`[tool] ${call.name}(${call.arguments})`);
       const tool = registry[call.name];
       let result: string;
 
