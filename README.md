@@ -37,6 +37,30 @@ reliability testing, and multi-agent orchestration.
   an OpenAI-compatible endpoint (custom `baseURL` + API key), so any
   model available on OpenRouter can be swapped in via env var.
 
+## Week 1: interactive CLI agent
+
+Week 1 turned the bootstrap's one-shot call into an interactive,
+tool-calling CLI agent:
+
+- **Hand-rolled agent loop** (`src/loop.ts`) — holds conversation state as
+  a plain `ResponseInputItem[]` array resent on every call (no
+  `previous_response_id`), and round-trips with the model until it stops
+  calling tools or hits a `MAX_STEPS` cap.
+- **Six tools** (`src/tools/`): `web_search` (via OpenRouter's `web`
+  plugin), `read_file`, `write_file`, `edit_file`, `list_files`, and
+  `run_command`.
+- **Human-approval gate** — `write_file`, `edit_file`, and `run_command`
+  are risky, so the loop pauses and asks `y`/`n` before running them; a
+  denial is fed back to the model instead of crashing.
+- **Eval suite** (`src/eval/`) — single-turn tool-choice checks against
+  the live model, plus a multi-turn case (mocked `web_search`/
+  `run_command`) that checks tool order, that the expected file exists,
+  and uses an LLM judge to check the final answer is actually correct.
+
+See `TRANSCRIPT.md` for a live session and `NOTES.md` for what came out of
+building it, and `docs/superpowers/plans/2026-08-27-week-01-cli-agent-plan.md`
+for the implementation plan.
+
 ## Getting started
 
 ```bash
@@ -44,29 +68,39 @@ bun install
 cp .env.example .env
 ```
 
-Fill in `.env` with your OpenRouter API key (and optionally a different
-model):
+Fill in `.env` with your OpenRouter API key (and optionally different
+models — `OPENROUTER_JUDGE_MODEL` powers the eval suite's LLM judge and
+should differ from `OPENROUTER_MODEL`):
 
 ```
 OPENROUTER_API_KEY=your-key-here
 OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 OPENROUTER_MODEL=z-ai/glm-5.3-flash
+OPENROUTER_JUDGE_MODEL=
 ```
 
-Then run the base agent:
+Then:
 
 ```bash
-bun run dev
+bun run dev    # start the interactive CLI agent
+bun test       # run the unit test suite
+bun run eval   # run the eval suite against the live model
 ```
 
 ## Project structure
 
 ```
 .
-├── src/                  # all source code (agent.ts today, more each week)
+├── src/
+│   ├── agent.ts          # interactive CLI entrypoint
+│   ├── loop.ts            # the tool-calling agent loop
+│   ├── tools/              # web_search, read/write/edit/list_files, run_command
+│   └── eval/                # single-turn + multi-turn eval suite, LLM judge
 ├── docs/superpowers/
 │   ├── specs/            # design docs for each piece of work
 │   └── plans/            # implementation plans
+├── TRANSCRIPT.md         # a full week-1 session transcript
+├── NOTES.md              # what was hardest, a bug the eval caught, what's next
 ├── CLAUDE.md             # conventions for Claude Code sessions
 ├── AGENTS.md             # conventions for other AI coding tools
 └── .env.example
