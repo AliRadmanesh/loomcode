@@ -3,6 +3,50 @@ import { RISKY, toolSchemas, type ToolRegistry } from "./tools/index.ts";
 
 export const MAX_STEPS = 15;
 
+// Rough estimate, not an exact tokenizer count — good enough to decide whether to compact.
+const CHARS_PER_TOKEN = 3.75;
+export const MAX_CONTEXT_TOKENS = 150_000;
+const COMPACTION_THRESHOLD = 0.8;
+// Turns kept verbatim so the model always sees the live request, never a paraphrase of it.
+export const KEEP_RECENT_TURNS = 2;
+
+function estimateTokens(input: OpenAI.Responses.ResponseInputItem[]): number {
+  return JSON.stringify(input).length / CHARS_PER_TOKEN;
+}
+
+export interface CompactOptions {
+  client: ResponsesClient;
+  model: string;
+  input: OpenAI.Responses.ResponseInputItem[];
+}
+
+export async function compactIfNeeded(opts: CompactOptions): Promise<void> {
+  const { client, model, input } = opts;
+  if (estimateTokens(input) < MAX_CONTEXT_TOKENS * COMPACTION_THRESHOLD) return;
+
+  const userIndices = input.reduce<number[]>((acc, item, i) => {
+    if ("role" in item && item.role === "user") acc.push(i);
+    return acc;
+  }, []);
+  if (userIndices.length <= KEEP_RECENT_TURNS) return;
+
+  const cutIndex = userIndices[userIndices.length - KEEP_RECENT_TURNS]!;
+  const oldItems = input.slice(0, cutIndex);
+  const summaryRequest = [
+    ...oldItems,
+    {
+      role: "developer" as const,
+      content: "Summarize this conversation so far in a few sentences, preserving important facts, decisions, and open threads.",
+    },
+  ];
+  const response = await client.responses.create({ model, input: summaryRequest, tools: [] });
+
+  input.splice(0, cutIndex, {
+    role: "developer",
+    content: `Summary of earlier conversation:\n${response.output_text}`,
+  });
+}
+
 export interface ResponsesClient {
   responses: {
     create(params: {
@@ -24,6 +68,8 @@ export interface RunTurnOptions {
 export async function runTurn(opts: RunTurnOptions): Promise<string> {
   const { client, model, input, registry, confirm } = opts;
   const tools = toolSchemas(registry);
+
+  await compactIfNeeded({ client, model, input });
 
   for (let step = 0; step < MAX_STEPS; step++) {
     const response = await client.responses.create({ model, input, tools });

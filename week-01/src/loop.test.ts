@@ -1,6 +1,6 @@
 import { test, expect } from "bun:test";
 import type OpenAI from "openai";
-import { runTurn, MAX_STEPS, type ResponsesClient } from "./loop.ts";
+import { runTurn, MAX_STEPS, compactIfNeeded, KEEP_RECENT_TURNS, type ResponsesClient } from "./loop.ts";
 import type { Tool, ToolRegistry } from "./tools/index.ts";
 
 function fakeResponse(
@@ -208,4 +208,72 @@ test("risky tool: approval runs it normally", async () => {
   expect(answer).toBe("done");
   const outputItem = input[2]! as OpenAI.Responses.ResponseInputItem.FunctionCallOutput;
   expect(outputItem.output).toBe("wrote it");
+});
+
+test("compaction: leaves input untouched when under the token budget", async () => {
+  let createCalls = 0;
+  const client: ResponsesClient = {
+    responses: {
+      create: async () => {
+        createCalls++;
+        return { output: [], output_text: "" };
+      },
+    },
+  };
+  const input: OpenAI.Responses.ResponseInputItem[] = [
+    { role: "user", content: "hello" },
+    { role: "assistant", content: "hi" },
+    { role: "user", content: "how are you" },
+  ];
+  const before = [...input];
+  await compactIfNeeded({ client, model: "m", input });
+  expect(input).toEqual(before);
+  expect(createCalls).toBe(0);
+});
+
+test("compaction: summarizes turns before the cut point and preserves the last KEEP_RECENT_TURNS turns", async () => {
+  const big = "x".repeat(500_000);
+  const input: OpenAI.Responses.ResponseInputItem[] = [
+    { role: "user", content: big },
+    { role: "assistant", content: "ok1" },
+    { role: "user", content: "turn2" },
+    { role: "assistant", content: "ok2" },
+    { role: "user", content: "turn3" },
+    { role: "assistant", content: "ok3" },
+  ];
+  const keptTail = input.slice(2);
+  const client: ResponsesClient = {
+    responses: {
+      create: async () => ({ output: [], output_text: "SUMMARY_TEXT" }),
+    },
+  };
+  await compactIfNeeded({ client, model: "m", input });
+
+  expect(input).toHaveLength(1 + keptTail.length);
+  const summaryItem = input[0]! as OpenAI.Responses.EasyInputMessage;
+  expect(summaryItem.role).toBe("developer");
+  expect(summaryItem.content).toContain("SUMMARY_TEXT");
+  expect(input.slice(1)).toEqual(keptTail);
+});
+
+test("compaction: skips when there aren't more than KEEP_RECENT_TURNS user turns to safely cut before", async () => {
+  const big = "x".repeat(500_000);
+  let createCalls = 0;
+  const client: ResponsesClient = {
+    responses: {
+      create: async () => {
+        createCalls++;
+        return { output: [], output_text: "SUMMARY_TEXT" };
+      },
+    },
+  };
+  const input: OpenAI.Responses.ResponseInputItem[] = [];
+  for (let i = 0; i < KEEP_RECENT_TURNS; i++) {
+    input.push({ role: "user", content: big });
+    input.push({ role: "assistant", content: `ok${i}` });
+  }
+  const before = [...input];
+  await compactIfNeeded({ client, model: "m", input });
+  expect(input).toEqual(before);
+  expect(createCalls).toBe(0);
 });
