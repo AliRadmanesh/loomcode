@@ -53,8 +53,8 @@ test("threads a function_call and its output into input, then stops", async () =
     model: "m",
     input,
     registry,
-    confirm: async (d) => {
-      confirmCalls.push(d);
+    confirm: async (_name, description) => {
+      confirmCalls.push(description);
       return true;
     },
   });
@@ -146,6 +146,38 @@ test("risky tool: denial feeds back 'User denied this action.' and does not exec
   expect(executed).toBe(false);
   const outputItem = input[2]! as OpenAI.Responses.ResponseInputItem.FunctionCallOutput;
   expect(outputItem.output).toBe("User denied this action.");
+});
+
+test("risky tool: confirm receives the tool name alongside the description", async () => {
+  const fakeWriteFile: Tool = {
+    name: "write_file",
+    description: "fake",
+    parameters: { type: "object", properties: {} },
+    execute: async () => "wrote it",
+  };
+  let call = 0;
+  const client: ResponsesClient = {
+    responses: {
+      create: async () => {
+        call++;
+        if (call === 1) return fakeResponse("", [{ name: "write_file", args: { path: "x" }, call_id: "call_1" }]);
+        return fakeResponse("done");
+      },
+    },
+  };
+  const input: OpenAI.Responses.ResponseInputItem[] = [{ role: "user", content: "write x" }];
+  const seen: Array<{ name: string; description: string }> = [];
+  await runTurn({
+    client,
+    model: "m",
+    input,
+    registry: { write_file: fakeWriteFile },
+    confirm: async (name, description) => {
+      seen.push({ name, description });
+      return true;
+    },
+  });
+  expect(seen).toEqual([{ name: "write_file", description: 'write_file({"path":"x"})' }]);
 });
 
 test("risky tool: approval runs it normally", async () => {

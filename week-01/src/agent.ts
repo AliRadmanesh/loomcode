@@ -14,9 +14,16 @@ const registry = createToolRegistry({ client, model });
 
 async function main() {
   const rl = readline.createInterface({ input: stdin, output: stdout });
-  const confirm = async (description: string): Promise<boolean> => {
-    const answer = await rl.question(`I'd like to ${description}. Allow? (y/n) › `);
-    return answer.trim().toLowerCase() === "y";
+  const alwaysAllow = new Set<string>();
+  const confirm = async (toolName: string, description: string): Promise<boolean> => {
+    if (alwaysAllow.has(toolName)) return true;
+    const answer = await rl.question(`I'd like to ${description}. Allow? (y/n/a=always allow ${toolName}) › `);
+    const normalized = answer.trim().toLowerCase();
+    if (normalized === "a") {
+      alwaysAllow.add(toolName);
+      return true;
+    }
+    return normalized === "y";
   };
   const input: OpenAI.Responses.ResponseInputItem[] = [];
 
