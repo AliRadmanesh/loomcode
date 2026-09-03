@@ -1,6 +1,6 @@
 import { test, expect } from "bun:test";
 import type OpenAI from "openai";
-import { runTurn, MAX_STEPS, compactIfNeeded, KEEP_RECENT_TURNS, type ResponsesClient } from "./loop.ts";
+import { runTurn, MAX_STEPS, compactIfNeeded, KEEP_RECENT_TURNS, SYSTEM_PROMPT, type ResponsesClient } from "./loop.ts";
 import type { Tool, ToolRegistry } from "./tools/index.ts";
 
 function fakeResponse(
@@ -208,6 +208,21 @@ test("risky tool: approval runs it normally", async () => {
   expect(answer).toBe("done");
   const outputItem = input[2]! as OpenAI.Responses.ResponseInputItem.FunctionCallOutput;
   expect(outputItem.output).toBe("wrote it");
+});
+
+test("sends the system prompt as instructions on the create call", async () => {
+  const seenInstructions: unknown[] = [];
+  const client: ResponsesClient = {
+    responses: {
+      create: async (params) => {
+        seenInstructions.push(params.instructions);
+        return fakeResponse("done");
+      },
+    },
+  };
+  const input: OpenAI.Responses.ResponseInputItem[] = [{ role: "user", content: "hi" }];
+  await runTurn({ client, model: "m", input, registry: {}, confirm: async () => true });
+  expect(seenInstructions).toEqual([SYSTEM_PROMPT]);
 });
 
 test("compaction: leaves input untouched when under the token budget", async () => {
