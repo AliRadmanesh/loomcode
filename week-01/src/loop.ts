@@ -3,6 +3,10 @@ import { RISKY, toolSchemas, type ToolRegistry } from "./tools/index.ts";
 
 export const MAX_STEPS = 15;
 
+export const SYSTEM_PROMPT =
+  "You are a CLI coding agent with tools to search the web and read, write, edit, list, and delete files, " +
+  "and run shell commands. Prefer using your tools to verify facts and make changes over guessing. Be concise.";
+
 // Rough estimate, not an exact tokenizer count — good enough to decide whether to compact.
 const CHARS_PER_TOKEN = 3.75;
 export const MAX_CONTEXT_TOKENS = 150_000;
@@ -53,6 +57,7 @@ export interface ResponsesClient {
       model: string;
       input: OpenAI.Responses.ResponseInputItem[];
       tools: OpenAI.Responses.FunctionTool[];
+      instructions?: string;
     }): Promise<{ output: OpenAI.Responses.ResponseOutputItem[]; output_text: string }>;
   };
 }
@@ -72,7 +77,7 @@ export async function runTurn(opts: RunTurnOptions): Promise<string> {
   await compactIfNeeded({ client, model, input });
 
   for (let step = 0; step < MAX_STEPS; step++) {
-    const response = await client.responses.create({ model, input, tools });
+    const response = await client.responses.create({ model, input, tools, instructions: SYSTEM_PROMPT });
 
     const calls = response.output.filter(
       (item): item is OpenAI.Responses.ResponseFunctionToolCall => item.type === "function_call",
