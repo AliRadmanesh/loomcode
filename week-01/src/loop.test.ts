@@ -271,6 +271,37 @@ test("compaction: summarizes turns before the cut point and preserves the last K
   expect(input.slice(1)).toEqual(keptTail);
 });
 
+test("malformed tool call arguments produce an Error string, never throws", async () => {
+  const okTool: Tool = {
+    name: "echo",
+    description: "echo",
+    parameters: { type: "object", properties: {} },
+    execute: async () => "should not run",
+  };
+  let call = 0;
+  const client: ResponsesClient = {
+    responses: {
+      create: async () => {
+        call++;
+        if (call === 1) {
+          return {
+            output: [
+              { type: "function_call", call_id: "call_1", name: "echo", arguments: "{not valid json" },
+            ] as unknown as OpenAI.Responses.ResponseOutputItem[],
+            output_text: "",
+          };
+        }
+        return fakeResponse("done");
+      },
+    },
+  };
+  const input: OpenAI.Responses.ResponseInputItem[] = [{ role: "user", content: "go" }];
+  const answer = await runTurn({ client, model: "m", input, registry: { echo: okTool }, confirm: async () => true });
+  expect(answer).toBe("done");
+  const outputItem = input[2]! as OpenAI.Responses.ResponseInputItem.FunctionCallOutput;
+  expect(outputItem.output).toStartWith("Error: invalid arguments JSON:");
+});
+
 test("compaction: skips when there aren't more than KEEP_RECENT_TURNS user turns to safely cut before", async () => {
   const big = "x".repeat(500_000);
   let createCalls = 0;

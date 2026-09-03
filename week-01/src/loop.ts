@@ -96,7 +96,17 @@ export async function runTurn(opts: RunTurnOptions): Promise<string> {
       if (!tool) {
         result = `Error: unknown tool "${call.name}"`;
       } else {
-        const args = JSON.parse(call.arguments) as Record<string, unknown>;
+        let args: Record<string, unknown>;
+        try {
+          args = JSON.parse(call.arguments) as Record<string, unknown>;
+        } catch (err) {
+          input.push({
+            type: "function_call_output",
+            call_id: call.call_id,
+            output: `Error: invalid arguments JSON: ${err instanceof Error ? err.message : String(err)}`,
+          });
+          continue;
+        }
         if (RISKY.has(call.name)) {
           const allowed = await confirm(call.name, `${call.name}(${call.arguments})`);
           result = allowed ? await tool.execute(args) : "User denied this action.";
