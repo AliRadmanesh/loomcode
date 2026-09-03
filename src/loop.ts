@@ -18,7 +18,7 @@ export interface RunTurnOptions {
   model: string;
   input: OpenAI.Responses.ResponseInputItem[];
   registry: ToolRegistry;
-  confirm: (description: string) => Promise<boolean>;
+  confirm: (toolName: string, description: string) => Promise<boolean>;
 }
 
 export async function runTurn(opts: RunTurnOptions): Promise<string> {
@@ -47,7 +47,7 @@ export async function runTurn(opts: RunTurnOptions): Promise<string> {
       } else {
         const args = JSON.parse(call.arguments) as Record<string, unknown>;
         if (RISKY.has(call.name)) {
-          const allowed = await confirm(`${call.name}(${call.arguments})`);
+          const allowed = await confirm(call.name, `${call.name}(${call.arguments})`);
           result = allowed ? await tool.execute(args) : "User denied this action.";
         } else {
           result = await tool.execute(args);
