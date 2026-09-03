@@ -5,6 +5,7 @@ import { readFileTool } from "./read-file.ts";
 import { editFileTool } from "./edit-file.ts";
 import { listFilesTool } from "./list-files.ts";
 import { runCommandTool } from "./run-command.ts";
+import { deleteFileTool } from "./delete-file.ts";
 
 export interface Tool {
   name: string;
@@ -15,7 +16,7 @@ export interface Tool {
 
 export type ToolRegistry = Record<string, Tool>;
 
-export const RISKY = new Set(["write_file", "edit_file", "run_command"]);
+export const RISKY = new Set(["write_file", "edit_file", "run_command", "delete_file"]);
 
 export function toolSchemas(registry: ToolRegistry): OpenAI.Responses.FunctionTool[] {
   return Object.values(registry).map((tool) => ({
@@ -35,5 +36,6 @@ export function createToolRegistry(deps: { client: OpenAI; model: string }): Too
     edit_file: editFileTool,
     list_files: listFilesTool,
     run_command: runCommandTool,
+    delete_file: deleteFileTool,
   };
 }

@@ -6,6 +6,7 @@ import { writeFileTool } from "./write-file.ts";
 import { readFileTool } from "./read-file.ts";
 import { editFileTool } from "./edit-file.ts";
 import { listFilesTool } from "./list-files.ts";
+import { deleteFileTool } from "./delete-file.ts";
 
 let dir: string;
 
@@ -77,5 +78,18 @@ test("list_files lists entries in a directory", async () => {
 
 test("list_files on a missing directory returns an Error string", async () => {
   const result = await listFilesTool.execute({ dir: join(dir, "nope") });
+  expect(result).toStartWith("Error:");
+});
+
+test("delete_file removes an existing file", async () => {
+  const path = join(dir, "hello.txt");
+  await writeFileTool.execute({ path, content: "hi" });
+  const result = await deleteFileTool.execute({ path });
+  expect(result).toBe(`Deleted ${path}`);
+  await expect(fsReadFile(path, "utf8")).rejects.toThrow();
+});
+
+test("delete_file on a missing path returns an Error string, not a throw", async () => {
+  const result = await deleteFileTool.execute({ path: join(dir, "missing.txt") });
   expect(result).toStartWith("Error:");
 });
