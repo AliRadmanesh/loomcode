@@ -22,4 +22,7 @@ export const writeFileTool: Tool = {
       return `Error: ${err instanceof Error ? err.message : String(err)}`;
     }
   },
+  describe(args) {
+    return `write ${String(args.path ?? "")} (${String(args.content ?? "").length} bytes)`;
+  },
 };

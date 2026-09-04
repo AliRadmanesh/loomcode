@@ -18,4 +18,7 @@ export const deleteFileTool: Tool = {
       return `Error: ${err instanceof Error ? err.message : String(err)}`;
     }
   },
+  describe(args) {
+    return `delete ${String(args.path ?? "")}`;
+  },
 };

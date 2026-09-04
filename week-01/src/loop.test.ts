@@ -154,6 +154,7 @@ test("risky tool: confirm receives the tool name alongside the description", asy
     description: "fake",
     parameters: { type: "object", properties: {} },
     execute: async () => "wrote it",
+    describe: (args) => `write ${String(args.path ?? "")}`,
   };
   let call = 0;
   const client: ResponsesClient = {
@@ -177,7 +178,39 @@ test("risky tool: confirm receives the tool name alongside the description", asy
       return true;
     },
   });
-  expect(seen).toEqual([{ name: "write_file", description: 'write_file({"path":"x"})' }]);
+  expect(seen).toEqual([{ name: "write_file", description: "write x" }]);
+});
+
+test("risky tool: falls back to raw JSON description when the tool has no describe", async () => {
+  const fakeWriteFile: Tool = {
+    name: "write_file",
+    description: "fake",
+    parameters: { type: "object", properties: {} },
+    execute: async () => "wrote it",
+  };
+  let call = 0;
+  const client: ResponsesClient = {
+    responses: {
+      create: async () => {
+        call++;
+        if (call === 1) return fakeResponse("", [{ name: "write_file", args: { path: "x" }, call_id: "call_1" }]);
+        return fakeResponse("done");
+      },
+    },
+  };
+  const input: OpenAI.Responses.ResponseInputItem[] = [{ role: "user", content: "write x" }];
+  const seen: string[] = [];
+  await runTurn({
+    client,
+    model: "m",
+    input,
+    registry: { write_file: fakeWriteFile },
+    confirm: async (_name, description) => {
+      seen.push(description);
+      return true;
+    },
+  });
+  expect(seen).toEqual(['write_file({"path":"x"})']);
 });
 
 test("risky tool: approval runs it normally", async () => {
