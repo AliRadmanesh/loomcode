@@ -21,7 +21,11 @@ export const mockRunCommandTool: Tool = {
     properties: { cmd: { type: "string" } },
     required: ["cmd"],
   },
-  async execute() {
+  async execute(args) {
+    const cmd = String(args.cmd ?? "");
+    if (cmd.includes("false")) {
+      return "Error: exited with code 1";
+    }
     return "2 3 5 7 11";
   },
 };
