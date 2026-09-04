@@ -1,10 +1,14 @@
 # AI Engineering Course — Repo Conventions
 
 This repo is homework for an "AI Engineering" course. The end goal is to
-build a Claude Code clone from scratch, **without any agent frameworks**
-(no LangChain, LlamaIndex, Vercel AI SDK, or equivalents in any
-language) — the tool-calling loop, prompt assembly, and memory must be
-hand-rolled so the underlying mechanics are fully understood.
+build a Claude Code clone from scratch. **Week 01 was built without any
+agent frameworks** (no LangChain, LlamaIndex, Vercel AI SDK, or
+equivalents in any language) so the tool-calling loop, prompt assembly,
+and memory were hand-rolled and the underlying mechanics fully
+understood. From week 02 onward, frameworks (LangChain, the Vercel AI
+SDK, etc.) may be adopted where they serve that week's focus — record
+*why* a framework is being introduced in that week's design doc
+(`docs/superpowers/specs/`) rather than adopting it silently.
 
 ## Simplicity principle
 
