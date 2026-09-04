@@ -27,7 +27,7 @@ export const multiTurnCases: MultiTurnCase[] = [
     prompt: "Write a python script primes.py that prints the first 5 primes, then run it.",
     expectedToolOrder: ["write_file", "run_command"],
     verifyFile: "primes.py",
-    judgeQuestion: "write a script and run it, printing prime numbers",
+    judgeQuestion: "write a correct Python script that computes and prints the first 5 prime numbers",
   },
   {
     name: "reports command failure honestly",
