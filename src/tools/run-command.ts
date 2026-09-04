@@ -53,4 +53,7 @@ export const runCommandTool: Tool = {
   async execute(args) {
     return runWithTimeout(String(args.cmd ?? ""));
   },
+  describe(args) {
+    return `run: ${String(args.cmd ?? "")}`;
+  },
 };

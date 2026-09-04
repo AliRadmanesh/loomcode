@@ -12,6 +12,7 @@ export interface Tool {
   description: string;
   parameters: Record<string, unknown>;
   execute: (args: Record<string, unknown>) => Promise<string>;
+  describe?: (args: Record<string, unknown>) => string;
 }
 
 export type ToolRegistry = Record<string, Tool>;

@@ -28,4 +28,7 @@ export const editFileTool: Tool = {
       return `Error: ${err instanceof Error ? err.message : String(err)}`;
     }
   },
+  describe(args) {
+    return `edit ${String(args.path ?? "")}`;
+  },
 };

@@ -93,3 +93,15 @@ test("delete_file on a missing path returns an Error string, not a throw", async
   const result = await deleteFileTool.execute({ path: join(dir, "missing.txt") });
   expect(result).toStartWith("Error:");
 });
+
+test("write_file describe summarizes path and byte length", () => {
+  expect(writeFileTool.describe!({ path: "notes.txt", content: "hi" })).toBe("write notes.txt (2 bytes)");
+});
+
+test("edit_file describe names the path", () => {
+  expect(editFileTool.describe!({ path: "config.json", oldString: "a", newString: "b" })).toBe("edit config.json");
+});
+
+test("delete_file describe names the path", () => {
+  expect(deleteFileTool.describe!({ path: "notes.txt" })).toBe("delete notes.txt");
+});

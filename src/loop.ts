@@ -108,7 +108,8 @@ export async function runTurn(opts: RunTurnOptions): Promise<string> {
           continue;
         }
         if (RISKY.has(call.name)) {
-          const allowed = await confirm(call.name, `${call.name}(${call.arguments})`);
+          const description = tool.describe ? tool.describe(args) : `${call.name}(${call.arguments})`;
+          const allowed = await confirm(call.name, description);
           result = allowed ? await tool.execute(args) : "User denied this action.";
         } else {
           result = await tool.execute(args);

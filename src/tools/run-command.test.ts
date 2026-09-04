@@ -21,3 +21,7 @@ test("run_command output beyond the cap is truncated with a marker", async () =>
   expect(result).toContain("... (truncated,");
   expect(result.length).toBeLessThan(200);
 });
+
+test("run_command describe echoes the full command", () => {
+  expect(runCommandTool.describe!({ cmd: "rm -rf ./tmp" })).toBe("run: rm -rf ./tmp");
+});
