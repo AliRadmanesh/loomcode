@@ -5,10 +5,14 @@ export async function judge(
   judgeModel: string,
   question: string,
   answer: string,
+  evidence?: string,
 ): Promise<boolean> {
+  const evidenceBlock = evidence ? `\n\nActual evidence collected from the environment:\n"""${evidence}"""` : "";
   const response = await client.responses.create({
     model: judgeModel,
-    input: `Did this response correctly ${question}? Response: """${answer}"""\nAnswer PASS or FAIL only.`,
+    input:
+      `An AI agent with real file and shell access was asked to ${question}. ` +
+      `Did it actually do so? Its final response: """${answer}"""${evidenceBlock}\nAnswer PASS or FAIL only.`,
   });
   return response.output_text.trim().toUpperCase().startsWith("PASS");
 }
