@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "bun run src/agent.ts",
-    "eval": "bun run src/eval/eval.ts"
+    "eval": "bun run week-01/src/eval/eval.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",
