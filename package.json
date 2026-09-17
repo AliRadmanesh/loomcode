@@ -3,8 +3,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run src/agent.ts",
-    "eval": "bun run week-01/src/eval/eval.ts"
+    "dev": "bun run scripts/dev.ts",
+    "eval": "bun run scripts/eval.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",

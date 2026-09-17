@@ -17,9 +17,10 @@ gradually at that point rather than pre-building for it now.
 ## Tech stack
 
 - TypeScript, run and managed with **Bun** — no npm/yarn/pnpm, no bundler.
-- All source code lives under `src/` (e.g. `src/agent.ts`). Root stays for
-  config (`package.json`, `tsconfig.json`, `.env*`) and docs (`CLAUDE.md`,
-  `AGENTS.md`, `docs/`).
+- `package.json`, `tsconfig.json`, and `.env*` live at the repo root and
+  are shared by every week. The base `src/agent.ts` at the root is the
+  bootstrap starting point and is left as-is — see "Module layout" below
+  for where weekly code actually goes.
 - LLM calls go through the OpenAI **Responses API**
   (`client.responses.create`), never Chat Completions.
 - LLM SDK is the official `openai` npm package.
@@ -27,23 +28,35 @@ gradually at that point rather than pre-building for it now.
   via a custom `baseURL` (`OPENROUTER_BASE_URL`) and API key
   (`OPENROUTER_API_KEY`), both loaded from `.env` via `dotenv`.
 
-## Branch model
+## Module layout
 
-Weekly homework branches stack on top of each other: `week-01` branches
-from `main`, `week-02` from `week-01`, and so on, since later weeks
-extend the agent built in earlier weeks. `main` holds only the shared
-bootstrap (scaffold, docs, base `src/agent.ts`) and never accumulates
-homework solutions. Each week's branch is what gets submitted for
-review.
+Everything lives on `main` — there are no weekly branches. Each week is
+its own top-level directory (`week-01/`, `week-02/`, ...) holding that
+week's `src/` and any week-specific notes (`NOTES.md`, `TRANSCRIPT.md`).
+A week's directory never imports from another week's directory — each
+one is an independent module, not an extension of the previous week's
+code. If a later week needs something an earlier week built, copy the
+relevant code into the new week's directory rather than importing across
+weeks.
+
+Shared, repo-wide things stay at the root: tooling config
+(`package.json`, `tsconfig.json`, `.env.example`), the base
+`src/agent.ts` bootstrap, the `scripts/dev.ts`/`scripts/eval.ts`
+dispatchers (`bun run dev [week-NN]`, `bun run eval [week-NN]`), root
+docs (`CLAUDE.md`, `AGENTS.md`, `README.md`), and all design docs under
+`docs/superpowers/` (see below — this directory is shared across all
+weeks, not per-week).
 
 ## Commit convention
 
-Within a week's branch, each discrete step/section of that week's
-assignment is its own commit, in the order completed, with a message
-describing that step. This gives a readable, incremental history per
-week.
+Each discrete step/section of a week's assignment is its own commit, in
+the order completed, with a message describing that step. This gives a
+readable, incremental history per week, all directly on `main`.
 
 ## Design docs
 
-Architectural decisions are recorded under `docs/superpowers/specs/`
-before implementation.
+Architectural decisions for every week are recorded under the one
+shared `docs/superpowers/specs/` (with matching `docs/superpowers/plans/`
+implementation plans) before implementation — not inside each week's
+directory. See `docs/superpowers/specs/2026-08-27-course-bootstrap-design.md`
+for the bootstrap's design.
